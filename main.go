@@ -1,12 +1,7 @@
 package main
 
-import (
-	"github.com/snkim/sncoin/explorer"
-	"github.com/snkim/sncoin/rest"
-)
-
+import "github.com/snkim/sncoin/cli"
 
 func main(){
-	go explorer.Start(3000)
-	rest.Start(4000)
+	cli.Start()
 }
