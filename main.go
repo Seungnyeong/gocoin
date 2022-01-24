@@ -1,7 +1,9 @@
 package main
 
-import "github.com/snkim/sncoin/cli"
+import (
+	"github.com/snkim/sncoin/blockchain"
+)
 
 func main(){
-	cli.Start()
+	blockchain.Blockchain()
 }
