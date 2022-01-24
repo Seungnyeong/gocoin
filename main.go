@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/snkim/sncoin/blockchain"
+	"github.com/snkim/sncoin/cli"
 )
 
 func main(){
-	blockchain.Blockchain().AddBlock("First")
-	blockchain.Blockchain().AddBlock("Second")
-	blockchain.Blockchain().AddBlock("Third")
+	blockchain.Blockchain()
+	cli.Start()
 }
