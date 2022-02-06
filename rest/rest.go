@@ -43,7 +43,7 @@ type addTxPayload struct {
 }
 
 type myWalletResponse struct {
-	Address string `json:address`	
+	Address string `json:"address"`	
 }
 
 
