@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/snkim/sncoin/blockchain"
+	"github.com/snkim/sncoin/p2p"
 	"github.com/snkim/sncoin/utils"
 	"github.com/snkim/sncoin/wallet"
 )
@@ -40,6 +41,10 @@ type errorResponse struct {
 type addTxPayload struct {
 	To string
 	Amount int
+}
+
+type addPeerPayload struct {
+	Address, Port string
 }
 
 type myWalletResponse struct {
@@ -80,6 +85,11 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 			Method: "GET",
 			Description: "Get TxOuts for an Address",
 		},
+		{
+			URL : url("/ws"),
+			Method: "GET",
+			Description: "Upgrade to WebSocket",
+		},
 	}
 	json.NewEncoder(rw).Encode(data)
 }
@@ -119,9 +129,20 @@ func jsonContentTypeMiddleWare(next http.Handler) http.Handler {
 	})
 }
 
+func loggerMiddleware(next http.Handler) http.Handler {
+	// adapter pattern 6.8 chapter
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
+		next.ServeHTTP(rw, r)
+	})
+
+}
+
 func status(rw http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(rw).Encode(blockchain.Blockchain())
 }
+
+
 
 func balance(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -161,11 +182,23 @@ func myWallet(rw http.ResponseWriter, r *http.Request) {
 	//json.NewEncoder(rw).Encode(struct{ Address string `json:"address"`}{Address: address})
 }
 
+func peers(rw http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		var payload addPeerPayload
+		json.NewDecoder(r.Body).Decode(&payload)
+		p2p.AddPeer(payload.Address, payload.Port, port)
+		rw.WriteHeader(http.StatusOK)
+	case "GET":
+		json.NewEncoder(rw).Encode(p2p.AllPeers(&p2p.Peers))
+	}
+}
+
 func Start(aPort int) {
 	// ServeMux는 url(/block) 와 url(blocks)를 연결해주는 역할을 한다.
 	router := mux.NewRouter()
 	port = fmt.Sprintf(":%d", aPort)
-	router.Use(jsonContentTypeMiddleWare)
+	router.Use(jsonContentTypeMiddleWare, loggerMiddleware)
 	router.HandleFunc("/", documentation).Methods("GET")
 	router.HandleFunc("/status", status)
 	router.HandleFunc("/blocks", blocks).Methods("GET", "POST")
@@ -174,6 +207,8 @@ func Start(aPort int) {
 	router.HandleFunc("/mempool", mempool).Methods("GET")
 	router.HandleFunc("/wallet", myWallet).Methods("GET")
 	router.HandleFunc("/transactions", transactions).Methods("POST")
+	router.HandleFunc("/ws", p2p.Upgrade).Methods("GET")
+	router.HandleFunc("/peers", peers).Methods("GET","POST")
 	fmt.Printf("Listening on http://localhost%s\n", port)
 	log.Fatal(http.ListenAndServe(port, router))
 }
