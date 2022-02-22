@@ -1,3 +1,4 @@
+// Pakage utils 유틸리티 패키지 전체 어플리케이션에서 사용
 package utils
 
 import (
@@ -10,9 +11,11 @@ import (
 	"strings"
 )
 
+var logFn = log.Panic
+
 func HandleErr(err error) {
 	if err != nil {
-		log.Panic(err)
+		logFn(err)
 	}
 }
 
@@ -23,11 +26,13 @@ func ToBytes(i interface{}) []byte {
 	return aBuffer.Bytes()
 }
 
+// 데이터를 바이트로 변환해줌
 func FromBytes(i interface{}, data []byte) {
 	encoder := gob.NewDecoder(bytes.NewReader(data)).Decode(i)
 	HandleErr(encoder)
 }
 
+// 데이터를 Hash로 변환시켜 string 형태롤 반환해줌
 func Hash(i interface{}) string {
 	s := fmt.Sprintf("%v", i)
 	hash := sha256.Sum256([]byte(s))
@@ -36,7 +41,7 @@ func Hash(i interface{}) string {
 
 func Splitter(s string, sep string , i int) string {
 	r := strings.Split(s, sep)
-	if len(r) -1 < i {
+	if len(r)-1 < i {
 		return ""
 	}
 	return r[i]
